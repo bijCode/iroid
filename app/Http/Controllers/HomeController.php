@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -86,5 +87,65 @@ class HomeController extends Controller
         $company->update($companyData);
 
         return redirect()->route('companies')->with('success', 'Company updated successfully.');
+    }
+
+    public function employees()
+    {
+        $employees = Employee::paginate(10);
+        return view('employee.list',compact('employees'));
+    }
+    public function addEmployee()
+    {
+        $companies = Company::all();
+        return view('employee.create', compact('companies'));
+    }
+    public function storeEmployee(Request $request)
+    {
+        $validatedData = $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'company_id' => 'required|exists:companies,id',
+            'mobile_number' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'join_date' => 'required|date',
+        ]);
+
+        $imagePath = $request->file('image')->store('employees', 'public');
+        $validatedData['created_by'] = Auth::id(); // Associate the logged-in user
+        $validatedData['updated_by'] = Auth::id(); // Associate the logged-in user
+
+        $employee = new Employee($validatedData);
+        $employee->image = $imagePath;
+        $employee->save();
+
+        return redirect()->route('employees')->with('success', 'Employee added successfully.');
+    }
+    public function editEmployee(Employee $employee)
+    {
+        $companies = Company::all();
+        return view('employee.edit', compact('employee','companies'));
+    }
+
+    public function updateEmployee(Request $request, Employee $employee)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'company_id' => 'required|exists:companies,id',
+            'mobile_number' => 'required|string',
+            'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'join_date' => 'required|date',
+        ]);
+
+        $employeeData = $request->except(['_token', '_method', 'logo']);
+
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('employees', 'public');
+            $employeeData['image'] = $imagePath;
+        }
+
+        $employee->update($employeeData);
+
+        return redirect()->route('employees')->with('success', 'Employee updated successfully.');
     }
 }

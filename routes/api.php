@@ -19,3 +19,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 Route::post('login', 'App\Http\Controllers\AuthController@login')->name('api.login');
 Route::middleware('auth:sanctum')->get('companies', 'App\Http\Controllers\APIController@companies')->name('api.companies');
+Route::middleware('auth:sanctum')->get('employees', 'App\Http\Controllers\APIController@employees')->name('api.employees');
